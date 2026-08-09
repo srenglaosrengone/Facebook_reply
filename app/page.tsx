@@ -53,8 +53,12 @@ export default async function Home() {
         </div>
       </main>
       
-      <footer className="bg-white py-6 border-t border-gray-200 text-center text-sm text-gray-500">
-        &copy; {new Date().getFullYear()} FB Page Manager. All rights reserved.
+      <footer className="bg-white py-6 border-t border-gray-200 flex flex-col items-center gap-2 text-sm text-gray-500">
+        <p>&copy; {new Date().getFullYear()} FB Page Manager. All rights reserved.</p>
+        <div className="flex gap-4">
+          <a href="/privacy" className="hover:text-gray-900 transition-colors">Privacy Policy</a>
+          <a href="/terms" className="hover:text-gray-900 transition-colors">Terms of Service</a>
+        </div>
       </footer>
     </div>
   )

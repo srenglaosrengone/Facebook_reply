@@ -58,6 +58,7 @@ export default async function Home() {
         <div className="flex gap-4">
           <a href="/privacy" className="hover:text-gray-900 transition-colors">Privacy Policy</a>
           <a href="/terms" className="hover:text-gray-900 transition-colors">Terms of Service</a>
+          <a href="/data-deletion" className="hover:text-gray-900 transition-colors">Data Deletion</a>
         </div>
       </footer>
     </div>

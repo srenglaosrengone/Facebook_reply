@@ -18,7 +18,7 @@ export default function PrivacyPolicyPage() {
 
           <h2 className="text-xl font-semibold text-gray-900 mt-8 mb-4">1. Introduction</h2>
           <p className="text-gray-700 mb-4">
-            Welcome to FB Page Manager ("we", "our", or "us"). We are committed to protecting your personal information and your right to privacy. This Privacy Policy governs the privacy policies and practices of our application.
+            Welcome to FB Page Manager (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;). We are committed to protecting your personal information and your right to privacy. This Privacy Policy governs the privacy policies and practices of our application.
           </p>
 
           <h2 className="text-xl font-semibold text-gray-900 mt-8 mb-4">2. Information We Collect</h2>
@@ -48,7 +48,7 @@ export default function PrivacyPolicyPage() {
 
           <h2 className="text-xl font-semibold text-gray-900 mt-8 mb-4">5. Data Deletion and Revocation</h2>
           <p className="text-gray-700 mb-4">
-            You have full control over your data. You can delete your rules, disconnect your pages, or delete your entire account directly from your dashboard. Additionally, you can revoke our application's access at any time through your Facebook Account Settings (Business Integrations). Once access is revoked, we immediately stop receiving Webhooks and can no longer interact with your pages.
+            You have full control over your data. You can delete your rules, disconnect your pages, or delete your entire account directly from your dashboard. Additionally, you can revoke our application&apos;s access at any time through your Facebook Account Settings (Business Integrations). Once access is revoked, we immediately stop receiving Webhooks and can no longer interact with your pages.
           </p>
 
           <h2 className="text-xl font-semibold text-gray-900 mt-8 mb-4">6. Contact Us</h2>

@@ -19,7 +19,15 @@ export function PageManager({ initialPages, providerToken }: { initialPages: Pag
 
   const fetchPagesFromFacebook = async () => {
     if (!providerToken) {
-      setError('Facebook access token not found. Please log out and log in again to refresh permissions.')
+      // Re-authenticate to get a fresh provider token
+      const { error: authError } = await supabase.auth.signInWithOAuth({
+        provider: 'facebook',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=/dashboard/pages`,
+          scopes: 'pages_show_list,pages_manage_metadata,pages_read_engagement,pages_manage_engagement'
+        }
+      })
+      if (authError) setError(authError.message)
       return
     }
 

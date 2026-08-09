@@ -33,13 +33,13 @@ export default function TermsOfServicePage() {
           <ul className="list-disc pl-6 text-gray-700 mb-4 space-y-2">
             <li>Provide accurate and complete information during registration.</li>
             <li>Maintain the security of your account and Facebook connection.</li>
-            <li>Use the service in compliance with Facebook's Platform Terms and Developer Policies.</li>
+            <li>Use the service in compliance with Facebook&apos;s Platform Terms and Developer Policies.</li>
             <li>Not use the service for spam, harassment, or any illegal activities.</li>
           </ul>
 
           <h2 className="text-xl font-semibold text-gray-900 mt-8 mb-4">4. Facebook Integration</h2>
           <p className="text-gray-700 mb-4">
-            Our service relies on the Facebook platform. We are not affiliated with, endorsed by, or sponsored by Facebook (Meta). Your use of the Facebook platform is subject to Facebook's own terms and policies. We are not responsible for any changes Facebook makes to its API that may affect our service functionality.
+            Our service relies on the Facebook platform. We are not affiliated with, endorsed by, or sponsored by Facebook (Meta). Your use of the Facebook platform is subject to Facebook&apos;s own terms and policies. We are not responsible for any changes Facebook makes to its API that may affect our service functionality.
           </p>
 
           <h2 className="text-xl font-semibold text-gray-900 mt-8 mb-4">5. Limitation of Liability</h2>

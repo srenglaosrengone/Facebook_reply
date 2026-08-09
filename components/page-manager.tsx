@@ -88,7 +88,7 @@ export function PageManager({ initialPages, providerToken }: { initialPages: Pag
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
         <div>
           <h3 className="font-medium text-gray-900">Sync with Facebook</h3>
           <p className="text-sm text-gray-500">Fetch your latest pages and permissions.</p>
@@ -96,7 +96,7 @@ export function PageManager({ initialPages, providerToken }: { initialPages: Pag
         <button
           onClick={fetchPagesFromFacebook}
           disabled={isFetching}
-          className="flex items-center gap-2 bg-gray-100 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50 text-sm font-medium"
+          className="flex items-center gap-2 bg-gray-100 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50 text-sm font-medium w-full sm:w-auto justify-center"
         >
           {isFetching ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Facebook className="h-4 w-4 text-[#1877F2]" />}
           {isFetching ? 'Syncing...' : 'Fetch Pages'}
@@ -119,18 +119,18 @@ export function PageManager({ initialPages, providerToken }: { initialPages: Pag
         ) : (
           <ul className="divide-y divide-gray-200">
             {pages.map((page) => (
-              <li key={page.id} className="p-6 flex items-center justify-between">
+              <li key={page.id} className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 bg-blue-50 rounded-full flex items-center justify-center text-[#1877F2]">
+                  <div className="h-12 w-12 bg-blue-50 rounded-full flex items-center justify-center text-[#1877F2] flex-shrink-0">
                     <Facebook className="h-6 w-6" />
                   </div>
                   <div>
-                    <h4 className="text-lg font-medium text-gray-900">{page.page_name}</h4>
+                    <h4 className="text-lg font-medium text-gray-900 break-all sm:break-normal">{page.page_name}</h4>
                     <p className="text-sm text-gray-500">ID: {page.page_id}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center cursor-pointer">
+                <div className="flex items-center gap-4 w-full sm:w-auto mt-2 sm:mt-0">
+                  <label className="flex items-center cursor-pointer w-full sm:w-auto bg-gray-50 sm:bg-transparent p-3 sm:p-0 rounded-md border sm:border-0 border-gray-100">
                     <div className="relative">
                       <input 
                         type="checkbox" 
@@ -141,7 +141,7 @@ export function PageManager({ initialPages, providerToken }: { initialPages: Pag
                       <div className={`block w-10 h-6 rounded-full transition-colors ${page.auto_reply_enabled ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                       <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${page.auto_reply_enabled ? 'transform translate-x-4' : ''}`}></div>
                     </div>
-                    <span className="ml-3 text-sm font-medium text-gray-700">
+                    <span className="ml-3 text-sm font-medium text-gray-700 flex-1">
                       Auto-Reply {page.auto_reply_enabled ? 'ON' : 'OFF'}
                     </span>
                   </label>

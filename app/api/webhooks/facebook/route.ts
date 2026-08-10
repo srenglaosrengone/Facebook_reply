@@ -71,13 +71,11 @@ export async function POST(request: Request) {
               .eq('page_id', pageRecord.id)
 
             let matchedReply = null
-            let isAiReply = false
 
             // 1. Try keyword matching
             if (rules && rules.length > 0) {
               const lowerComment = commentText.toLowerCase()
               for (const rule of rules) {
-                // Support multiple keywords separated by commas
                 const keywords = rule.keyword.split(',').map((k: string) => k.trim().toLowerCase())
                 if (keywords.some((k: string) => lowerComment.includes(k))) {
                   matchedReply = rule.reply_message
@@ -86,38 +84,13 @@ export async function POST(request: Request) {
               }
             }
 
-            // 2. AI Fallback if enabled
-            if (!matchedReply && pageRecord.ai_reply_enabled) {
-              try {
-                const aiResponse = await fetch(`${process.env.BUILT_IN_FORGE_API_URL}/v1/chat/completions`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${process.env.BUILT_IN_FORGE_API_KEY}`
-                  },
-                  body: JSON.stringify({
-                    model: 'gpt-5-mini',
-                    messages: [
-                      { 
-                        role: 'system', 
-                        content: `You are a helpful assistant for the Facebook page "${pageRecord.page_name}". ${pageRecord.ai_prompt_instruction || 'Provide a polite and helpful reply to the customer comment.'} Keep the reply concise and natural.` 
-                      },
-                      { role: 'user', content: commentText }
-                    ],
-                    max_tokens: 200
-                  })
-                })
-                const aiData = await aiResponse.json()
-                matchedReply = aiData.choices[0]?.message?.content
-                isAiReply = true
-              } catch (aiErr) {
-                console.error('AI Reply failed:', aiErr)
-              }
+            // 2. Default Fallback (Static text)
+            if (!matchedReply && pageRecord.default_reply_enabled) {
+              matchedReply = pageRecord.default_reply_message
             }
 
             if (matchedReply) {
               try {
-                // Using v21.0 for Graph API
                 const res = await fetch(`https://graph.facebook.com/v21.0/${commentId}/comments`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -135,8 +108,7 @@ export async function POST(request: Request) {
                   sender_id: senderId,
                   comment_text: commentText,
                   reply_sent: matchedReply,
-                  status: 'success',
-                  is_ai_reply: isAiReply
+                  status: 'success'
                 })
 
               } catch (err: any) {
@@ -147,8 +119,7 @@ export async function POST(request: Request) {
                   sender_id: senderId,
                   comment_text: commentText,
                   reply_sent: matchedReply,
-                  status: 'error',
-                  is_ai_reply: isAiReply
+                  status: 'error'
                 })
               }
             }

@@ -9,8 +9,8 @@ type Page = {
   page_id: string
   page_name: string
   auto_reply_enabled: boolean
-  ai_reply_enabled: boolean
-  ai_prompt_instruction: string | null
+  default_reply_enabled: boolean
+  default_reply_message: string | null
 }
 
 export function PageManager({ initialPages, providerToken }: { initialPages: Page[], providerToken: string | null }) {
@@ -84,14 +84,14 @@ export function PageManager({ initialPages, providerToken }: { initialPages: Pag
     await supabase.from('facebook_pages').update({ auto_reply_enabled: !currentStatus }).eq('id', id)
   }
 
-  const toggleAiReply = async (id: string, currentStatus: boolean) => {
-    setPages(pages.map(p => p.id === id ? { ...p, ai_reply_enabled: !currentStatus } : p))
-    await supabase.from('facebook_pages').update({ ai_reply_enabled: !currentStatus }).eq('id', id)
+  const toggleDefaultReply = async (id: string, currentStatus: boolean) => {
+    setPages(pages.map(p => p.id === id ? { ...p, default_reply_enabled: !currentStatus } : p))
+    await supabase.from('facebook_pages').update({ default_reply_enabled: !currentStatus }).eq('id', id)
   }
 
-  const updateAiInstruction = async (id: string, instruction: string) => {
-    setPages(pages.map(p => p.id === id ? { ...p, ai_prompt_instruction: instruction } : p))
-    await supabase.from('facebook_pages').update({ ai_prompt_instruction: instruction }).eq('id', id)
+  const updateDefaultReplyMessage = async (id: string, message: string) => {
+    setPages(pages.map(p => p.id === id ? { ...p, default_reply_message: message } : p))
+    await supabase.from('facebook_pages').update({ default_reply_message: message }).eq('id', id)
   }
 
   return (
@@ -159,24 +159,24 @@ export function PageManager({ initialPages, providerToken }: { initialPages: Pag
                       <input 
                         type="checkbox" 
                         className="sr-only" 
-                        checked={page.ai_reply_enabled}
-                        onChange={() => toggleAiReply(page.id, page.ai_reply_enabled)}
+                        checked={page.default_reply_enabled}
+                        onChange={() => toggleDefaultReply(page.id, page.default_reply_enabled)}
                       />
-                      <div className={`block w-10 h-6 rounded-full transition-colors ${page.ai_reply_enabled ? 'bg-purple-500' : 'bg-gray-300'}`}></div>
-                      <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${page.ai_reply_enabled ? 'transform translate-x-4' : ''}`}></div>
+                      <div className={`block w-10 h-6 rounded-full transition-colors ${page.default_reply_enabled ? 'bg-blue-500' : 'bg-gray-300'}`}></div>
+                      <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${page.default_reply_enabled ? 'transform translate-x-4' : ''}`}></div>
                     </div>
                     <span className="ml-3 text-xs font-medium text-gray-700 flex-1">
-                      AI Fallback {page.ai_reply_enabled ? 'ON' : 'OFF'}
+                      Default Reply {page.default_reply_enabled ? 'ON' : 'OFF'}
                     </span>
                   </label>
 
-                  {page.ai_reply_enabled && (
+                  {page.default_reply_enabled && (
                     <div className="mt-1">
                       <textarea
-                        defaultValue={page.ai_prompt_instruction || ''}
-                        onBlur={(e) => updateAiInstruction(page.id, e.target.value)}
-                        placeholder="AI Instructions (e.g. Be funny...)"
-                        className="w-full text-xs border border-gray-200 rounded p-2 focus:ring-1 focus:ring-purple-500 outline-none"
+                        defaultValue={page.default_reply_message || ''}
+                        onBlur={(e) => updateDefaultReplyMessage(page.id, e.target.value)}
+                        placeholder="Default reply message when no keywords match..."
+                        className="w-full text-xs border border-gray-200 rounded p-2 focus:ring-1 focus:ring-blue-500 outline-none"
                         rows={2}
                       />
                     </div>

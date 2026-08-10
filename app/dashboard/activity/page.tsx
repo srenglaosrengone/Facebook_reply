@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import { Activity, CheckCircle2, AlertCircle, Bot } from 'lucide-react'
+import { Activity, CheckCircle2, AlertCircle } from 'lucide-react'
 
 export default async function ActivityPage() {
   const supabase = await createClient()
@@ -48,7 +48,6 @@ export default async function ActivityPage() {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       <div className="flex items-center gap-2">
-                        {log.is_ai_reply && <Bot className="h-3 w-3 text-purple-500" title="AI Reply" />}
                         <span className="truncate max-w-xs">{log.reply_sent}</span>
                       </div>
                     </td>

@@ -9,6 +9,8 @@ type Page = {
   page_id: string
   page_name: string
   auto_reply_enabled: boolean
+  ai_reply_enabled: boolean
+  ai_prompt_instruction: string | null
 }
 
 export function PageManager({ initialPages, providerToken }: { initialPages: Page[], providerToken: string | null }) {
@@ -79,11 +81,17 @@ export function PageManager({ initialPages, providerToken }: { initialPages: Pag
 
   const toggleAutoReply = async (id: string, currentStatus: boolean) => {
     setPages(pages.map(p => p.id === id ? { ...p, auto_reply_enabled: !currentStatus } : p))
-    
-    await supabase
-      .from('facebook_pages')
-      .update({ auto_reply_enabled: !currentStatus })
-      .eq('id', id)
+    await supabase.from('facebook_pages').update({ auto_reply_enabled: !currentStatus }).eq('id', id)
+  }
+
+  const toggleAiReply = async (id: string, currentStatus: boolean) => {
+    setPages(pages.map(p => p.id === id ? { ...p, ai_reply_enabled: !currentStatus } : p))
+    await supabase.from('facebook_pages').update({ ai_reply_enabled: !currentStatus }).eq('id', id)
+  }
+
+  const updateAiInstruction = async (id: string, instruction: string) => {
+    setPages(pages.map(p => p.id === id ? { ...p, ai_prompt_instruction: instruction } : p))
+    await supabase.from('facebook_pages').update({ ai_prompt_instruction: instruction }).eq('id', id)
   }
 
   return (
@@ -129,8 +137,8 @@ export function PageManager({ initialPages, providerToken }: { initialPages: Pag
                     <p className="text-sm text-gray-500">ID: {page.page_id}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-4 w-full sm:w-auto mt-2 sm:mt-0">
-                  <label className="flex items-center cursor-pointer w-full sm:w-auto bg-gray-50 sm:bg-transparent p-3 sm:p-0 rounded-md border sm:border-0 border-gray-100">
+                <div className="flex flex-col gap-4 w-full sm:w-64 mt-4 sm:mt-0">
+                  <label className="flex items-center cursor-pointer w-full bg-gray-50 p-2 rounded-md border border-gray-100">
                     <div className="relative">
                       <input 
                         type="checkbox" 
@@ -141,10 +149,38 @@ export function PageManager({ initialPages, providerToken }: { initialPages: Pag
                       <div className={`block w-10 h-6 rounded-full transition-colors ${page.auto_reply_enabled ? 'bg-green-500' : 'bg-gray-300'}`}></div>
                       <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${page.auto_reply_enabled ? 'transform translate-x-4' : ''}`}></div>
                     </div>
-                    <span className="ml-3 text-sm font-medium text-gray-700 flex-1">
+                    <span className="ml-3 text-xs font-medium text-gray-700 flex-1">
                       Auto-Reply {page.auto_reply_enabled ? 'ON' : 'OFF'}
                     </span>
                   </label>
+
+                  <label className="flex items-center cursor-pointer w-full bg-gray-50 p-2 rounded-md border border-gray-100">
+                    <div className="relative">
+                      <input 
+                        type="checkbox" 
+                        className="sr-only" 
+                        checked={page.ai_reply_enabled}
+                        onChange={() => toggleAiReply(page.id, page.ai_reply_enabled)}
+                      />
+                      <div className={`block w-10 h-6 rounded-full transition-colors ${page.ai_reply_enabled ? 'bg-purple-500' : 'bg-gray-300'}`}></div>
+                      <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${page.ai_reply_enabled ? 'transform translate-x-4' : ''}`}></div>
+                    </div>
+                    <span className="ml-3 text-xs font-medium text-gray-700 flex-1">
+                      AI Fallback {page.ai_reply_enabled ? 'ON' : 'OFF'}
+                    </span>
+                  </label>
+
+                  {page.ai_reply_enabled && (
+                    <div className="mt-1">
+                      <textarea
+                        defaultValue={page.ai_prompt_instruction || ''}
+                        onBlur={(e) => updateAiInstruction(page.id, e.target.value)}
+                        placeholder="AI Instructions (e.g. Be funny...)"
+                        className="w-full text-xs border border-gray-200 rounded p-2 focus:ring-1 focus:ring-purple-500 outline-none"
+                        rows={2}
+                      />
+                    </div>
+                  )}
                 </div>
               </li>
             ))}

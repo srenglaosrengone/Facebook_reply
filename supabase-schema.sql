@@ -8,6 +8,8 @@ CREATE TABLE facebook_pages (
     page_name TEXT NOT NULL,
     access_token TEXT NOT NULL, -- You might want to encrypt this in production
     auto_reply_enabled BOOLEAN DEFAULT false,
+    ai_reply_enabled BOOLEAN DEFAULT false,
+    ai_prompt_instruction TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
     UNIQUE(user_id, page_id)
 );
@@ -38,6 +40,7 @@ CREATE TABLE reply_rules (
     page_id UUID REFERENCES facebook_pages(id) ON DELETE CASCADE,
     keyword TEXT NOT NULL,
     reply_message TEXT NOT NULL,
+    reply_type TEXT DEFAULT 'public', -- 'public' or 'private'
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -85,6 +88,7 @@ CREATE TABLE reply_logs (
     comment_text TEXT NOT NULL,
     reply_sent TEXT,
     status TEXT NOT NULL, -- 'success', 'error', 'ignored'
+    is_ai_reply BOOLEAN DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

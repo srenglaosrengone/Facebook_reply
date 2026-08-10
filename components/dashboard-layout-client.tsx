@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { MessageCircle, Settings, LayoutDashboard, Menu, X } from 'lucide-react'
+import { MessageCircle, Settings, LayoutDashboard, Menu, X, Activity } from 'lucide-react'
 import { LogoutButton } from '@/components/logout-button'
 
 export function DashboardLayoutClient({ 
@@ -20,6 +20,7 @@ export function DashboardLayoutClient({
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/dashboard/pages', label: 'Manage Pages', icon: Settings },
     { href: '/dashboard/rules', label: 'Reply Rules', icon: MessageCircle },
+    { href: '/dashboard/activity', label: 'Activity Logs', icon: Activity },
     { href: '/dashboard/setup', label: 'Setup Guide', icon: Settings },
   ]
 

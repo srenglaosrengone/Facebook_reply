@@ -30,7 +30,7 @@ export function RulesManager({ pages, initialRules }: { pages: Page[], initialRu
     if (!selectedPage || !keyword || !replyMessage) return
 
     setLoading(true)
-    const { data, error } = await supabase
+    const { data: insertedData, error: insertError } = await supabase
       .from('reply_rules')
       .insert({
         page_id: selectedPage,
@@ -38,12 +38,23 @@ export function RulesManager({ pages, initialRules }: { pages: Page[], initialRu
         reply_message: replyMessage,
         reply_type: replyType
       })
-      .select('*, facebook_pages(page_name)')
+      .select()
       .single()
 
-    if (error) {
-      console.error(error)
-    } else if (data) {
+    if (insertError) {
+      console.error(insertError)
+      setLoading(false)
+      return
+    }
+
+    // Manually add the page name for UI consistency
+    const page = pages.find(p => p.id === selectedPage)
+    const data = {
+      ...insertedData,
+      facebook_pages: { page_name: page?.page_name || '' }
+    }
+
+    if (data) {
       setRules([data, ...rules])
       setKeyword('')
       setReplyMessage('')

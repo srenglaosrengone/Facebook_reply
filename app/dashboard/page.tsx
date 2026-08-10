@@ -5,10 +5,10 @@ import { PlusCircle, Activity } from 'lucide-react'
 export default async function DashboardPage() {
   const supabase = await createClient()
   
-  // Fetch user's pages
+  // Fetch user's pages (Safe select)
   const { data: pages } = await supabase
     .from('facebook_pages')
-    .select('*')
+    .select('id, page_id, page_name, auto_reply_enabled, created_at')
     .order('created_at', { ascending: false })
 
   // Fetch recent logs if pages exist

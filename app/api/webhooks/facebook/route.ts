@@ -57,14 +57,15 @@ export async function POST(request: Request) {
         const pageId = entry.id;
         console.log('Processing entry for page:', pageId);
         
+        // Safe query: only select columns we know exist for sure
         const { data: pageRecord, error: pageError } = await supabase
           .from('facebook_pages')
-          .select('*')
+          .select('id, page_id, page_name, access_token, auto_reply_enabled')
           .eq('page_id', pageId)
           .single();
 
         if (pageError || !pageRecord) {
-          console.log('Page not found in database:', pageId);
+          console.log('Page not found or query error:', pageId, pageError?.message);
           continue;
         }
 
@@ -72,6 +73,16 @@ export async function POST(request: Request) {
           console.log('Auto-reply is disabled for page:', pageRecord.page_name);
           continue;
         }
+
+        // Try to fetch optional columns safely
+        const { data: extraData } = await supabase
+          .from('facebook_pages')
+          .select('default_reply_enabled, default_reply_message')
+          .eq('id', pageRecord.id)
+          .single();
+        
+        const defaultReplyEnabled = extraData?.default_reply_enabled || false;
+        const defaultReplyMessage = extraData?.default_reply_message || null;
 
         for (const change of entry.changes || []) {
           console.log('Change detected:', change.field, change.value?.item, change.value?.verb);
@@ -109,8 +120,8 @@ export async function POST(request: Request) {
             }
 
             // 2. Default Fallback (Static text)
-            if (!matchedReply && pageRecord.default_reply_enabled) {
-              matchedReply = pageRecord.default_reply_message
+            if (!matchedReply && defaultReplyEnabled) {
+              matchedReply = defaultReplyMessage
             }
 
             if (matchedReply) {

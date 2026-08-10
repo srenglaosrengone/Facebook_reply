@@ -4,7 +4,7 @@ import { RulesManager } from '@/components/rules-manager'
 export default async function RulesPage() {
   const supabase = await createClient()
   
-  // Fetch user's pages to select from
+  // Fetch user's pages to select from (Safe select)
   const { data: pages } = await supabase
     .from('facebook_pages')
     .select('id, page_name')

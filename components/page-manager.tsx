@@ -142,13 +142,20 @@ export function PageManager({ initialPages, providerToken }: { initialPages: Pag
   }
 
   const toggleDefaultReply = async (id: string, currentStatus: boolean) => {
-    setPages(pages.map(p => p.id === id ? { ...p, default_reply_enabled: !currentStatus } : p))
-    await supabase.from('facebook_pages').update({ default_reply_enabled: !currentStatus }).eq('id', id)
+    const newStatus = !currentStatus
+    setPages(pages.map(p => p.id === id ? { ...p, default_reply_enabled: newStatus } : p))
+    const { error } = await supabase.from('facebook_pages').update({ default_reply_enabled: newStatus }).eq('id', id)
+    if (error && error.message.includes('default_reply_enabled')) {
+      setError('Database is out of sync. Please run the SQL migration in Supabase to enable Default Reply.')
+    }
   }
 
   const updateDefaultReplyMessage = async (id: string, message: string) => {
     setPages(pages.map(p => p.id === id ? { ...p, default_reply_message: message } : p))
-    await supabase.from('facebook_pages').update({ default_reply_message: message }).eq('id', id)
+    const { error } = await supabase.from('facebook_pages').update({ default_reply_message: message }).eq('id', id)
+    if (error && error.message.includes('default_reply_message')) {
+      setError('Database is out of sync. Please run the SQL migration in Supabase to enable Default Reply.')
+    }
   }
 
   return (

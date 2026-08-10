@@ -10,7 +10,7 @@ export default async function ActivityPage() {
 
   const { data: logs } = await supabase
     .from('reply_logs')
-    .select('*')
+    .select('id, page_id, comment_id, sender_id, comment_text, reply_sent, status, created_at')
     .order('created_at', { ascending: false })
     .limit(50)
 

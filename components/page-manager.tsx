@@ -80,8 +80,25 @@ export function PageManager({ initialPages, providerToken }: { initialPages: Pag
   }
 
   const toggleAutoReply = async (id: string, currentStatus: boolean) => {
-    setPages(pages.map(p => p.id === id ? { ...p, auto_reply_enabled: !currentStatus } : p))
-    await supabase.from('facebook_pages').update({ auto_reply_enabled: !currentStatus }).eq('id', id)
+    const newStatus = !currentStatus
+    setPages(pages.map(p => p.id === id ? { ...p, auto_reply_enabled: newStatus } : p))
+    
+    try {
+      // 1. Update Database
+      await supabase.from('facebook_pages').update({ auto_reply_enabled: newStatus }).eq('id', id)
+      
+      // 2. Subscribe/Unsubscribe Page to Facebook App Webhooks
+      await fetch('/api/facebook/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          pageRecordId: id, 
+          action: newStatus ? 'subscribe' : 'unsubscribe' 
+        })
+      })
+    } catch (err) {
+      console.error('Failed to update subscription:', err)
+    }
   }
 
   const toggleDefaultReply = async (id: string, currentStatus: boolean) => {

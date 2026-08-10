@@ -4,11 +4,22 @@ import { Activity, CheckCircle2, AlertCircle } from 'lucide-react'
 export default async function ActivityPage() {
   const supabase = await createClient()
   
+  const { data: pages } = await supabase
+    .from('facebook_pages')
+    .select('id, page_name')
+
   const { data: logs } = await supabase
     .from('reply_logs')
-    .select('*, facebook_pages(page_name)')
+    .select('*')
     .order('created_at', { ascending: false })
     .limit(50)
+
+  if (logs && pages) {
+    logs.forEach(log => {
+      const page = pages.find(p => p.id === log.page_id)
+      log.facebook_pages = { page_name: page?.page_name || 'Unknown' }
+    })
+  }
 
   return (
     <div className="space-y-6">

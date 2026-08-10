@@ -17,10 +17,18 @@ export default async function DashboardPage() {
     const pageIds = pages.map(p => p.id)
     const { data: logs } = await supabase
       .from('reply_logs')
-      .select('*, facebook_pages(page_name)')
+      .select('*')
       .in('page_id', pageIds)
       .order('created_at', { ascending: false })
       .limit(5)
+    
+    // Manually attach page name
+    if (logs) {
+      logs.forEach(log => {
+        const page = pages.find(p => p.id === log.page_id)
+        log.facebook_pages = { page_name: page?.page_name || 'Unknown' }
+      })
+    }
     
     recentLogs = logs || []
   }

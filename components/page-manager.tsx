@@ -16,8 +16,48 @@ type Page = {
 export function PageManager({ initialPages, providerToken }: { initialPages: Page[], providerToken: string | null }) {
   const [pages, setPages] = useState<Page[]>(initialPages)
   const [isFetching, setIsFetching] = useState(false)
+  const [isAddingManual, setIsAddingManual] = useState(false)
+  const [manualData, setManualData] = useState({ pageId: '', pageName: '', accessToken: '' })
   const [error, setError] = useState('')
   const supabase = createClient()
+
+  const handleManualAdd = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setIsFetching(true)
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+
+      const { data, error: insertError } = await supabase
+        .from('facebook_pages')
+        .upsert({
+          user_id: user.id,
+          page_id: manualData.pageId,
+          page_name: manualData.pageName,
+          access_token: manualData.accessToken,
+        }, { onConflict: 'user_id, page_id' })
+        .select()
+        .single()
+
+      if (insertError) throw insertError
+
+      // Refresh list
+      const { data: refreshedPages } = await supabase
+        .from('facebook_pages')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (refreshedPages) setPages(refreshedPages)
+      setIsAddingManual(false)
+      setManualData({ pageId: '', pageName: '', accessToken: '' })
+    } catch (err: any) {
+      setError(err.message || 'Failed to add page manually.')
+    } finally {
+      setIsFetching(false)
+    }
+  }
 
   const fetchPagesFromFacebook = async () => {
     if (!providerToken) {
@@ -115,18 +155,84 @@ export function PageManager({ initialPages, providerToken }: { initialPages: Pag
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
         <div>
-          <h3 className="font-medium text-gray-900">Sync with Facebook</h3>
-          <p className="text-sm text-gray-500">Fetch your latest pages and permissions.</p>
+          <h3 className="font-medium text-gray-900">Facebook Connection</h3>
+          <p className="text-sm text-gray-500">Connect your pages via OAuth or Manual Token.</p>
         </div>
-        <button
-          onClick={fetchPagesFromFacebook}
-          disabled={isFetching}
-          className="flex items-center gap-2 bg-gray-100 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors disabled:opacity-50 text-sm font-medium w-full sm:w-auto justify-center"
-        >
-          {isFetching ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Facebook className="h-4 w-4 text-[#1877F2]" />}
-          {isFetching ? 'Syncing...' : 'Fetch Pages'}
-        </button>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <button
+            onClick={() => setIsAddingManual(!isAddingManual)}
+            className="flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors text-sm font-medium flex-1 sm:flex-initial justify-center"
+          >
+            <PlusCircle className="h-4 w-4" />
+            Manual Token
+          </button>
+          <button
+            onClick={fetchPagesFromFacebook}
+            disabled={isFetching}
+            className="flex items-center gap-2 bg-[#1877F2] text-white px-4 py-2 rounded-md hover:bg-[#1864F2] transition-colors disabled:opacity-50 text-sm font-medium flex-1 sm:flex-initial justify-center"
+          >
+            {isFetching ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Facebook className="h-4 w-4" />}
+            {isFetching ? 'Syncing...' : 'Fetch Pages'}
+          </button>
+        </div>
       </div>
+
+      {isAddingManual && (
+        <form onSubmit={handleManualAdd} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 space-y-4 animate-in fade-in slide-in-from-top-2">
+          <h4 className="font-medium text-gray-900 border-b pb-2">Add Page Manually</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Page Name</label>
+              <input 
+                type="text" 
+                required
+                value={manualData.pageName}
+                onChange={(e) => setManualData({...manualData, pageName: e.target.value})}
+                placeholder="e.g. My Awesome Shop"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#1877F2]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Page ID</label>
+              <input 
+                type="text" 
+                required
+                value={manualData.pageId}
+                onChange={(e) => setManualData({...manualData, pageId: e.target.value})}
+                placeholder="Numerical ID"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#1877F2]"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">Page Access Token</label>
+            <textarea 
+              required
+              rows={3}
+              value={manualData.accessToken}
+              onChange={(e) => setManualData({...manualData, accessToken: e.target.value})}
+              placeholder="Paste your Page Access Token here..."
+              className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#1877F2]"
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <button 
+              type="button"
+              onClick={() => setIsAddingManual(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit"
+              disabled={isFetching}
+              className="bg-[#1877F2] text-white px-6 py-2 rounded-md hover:bg-[#1864F2] text-sm font-medium disabled:opacity-50"
+            >
+              {isFetching ? 'Saving...' : 'Save Page'}
+            </button>
+          </div>
+        </form>
+      )}
 
       {error && (
         <div className="p-4 bg-red-50 text-red-600 rounded-md text-sm border border-red-100">

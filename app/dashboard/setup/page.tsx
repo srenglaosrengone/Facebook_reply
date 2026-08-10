@@ -28,6 +28,23 @@ export default function SetupGuidePage() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-6 py-5 border-b border-gray-200 bg-gray-50 flex items-center gap-3">
           <div className="h-8 w-8 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold">1</div>
+          <h3 className="text-lg font-medium text-gray-900">Run the Database Schema</h3>
+        </div>
+        <div className="p-6 prose prose-blue max-w-none text-gray-600">
+          <p>Your database needs tables to store your pages and auto-reply rules.</p>
+          <ol className="list-decimal pl-5 space-y-2">
+            <li>Open the file <code>supabase-schema.sql</code> in this project.</li>
+            <li>Copy all of its contents.</li>
+            <li>Go to your <strong>Supabase Dashboard</strong> &gt; <strong>SQL Editor</strong>.</li>
+            <li>Click <strong>New query</strong>, paste the code, and click <strong>Run</strong>.</li>
+            <li>Verify you get a "Success" message indicating tables were created.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="px-6 py-5 border-b border-gray-200 bg-gray-50 flex items-center gap-3">
+          <div className="h-8 w-8 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold">2</div>
           <h3 className="text-lg font-medium text-gray-900">Fix the Localhost Issue in Supabase</h3>
         </div>
         <div className="p-6 prose prose-blue max-w-none text-gray-600">
@@ -42,7 +59,7 @@ export default function SetupGuidePage() {
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-6 py-5 border-b border-gray-200 bg-gray-50 flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold">2</div>
+          <div className="h-8 w-8 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold">3</div>
           <h3 className="text-lg font-medium text-gray-900">Setup Facebook Webhooks</h3>
         </div>
         <div className="p-6 prose prose-blue max-w-none text-gray-600">
@@ -66,7 +83,7 @@ export default function SetupGuidePage() {
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-6 py-5 border-b border-gray-200 bg-gray-50 flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold">3</div>
+          <div className="h-8 w-8 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold">4</div>
           <h3 className="text-lg font-medium text-gray-900">Verify Supabase Facebook Provider</h3>
         </div>
         <div className="p-6 prose prose-blue max-w-none text-gray-600">

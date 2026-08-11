@@ -1,22 +1,5 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/utils/supabase/admin'
-import crypto from 'crypto'
-
-function verifySignature(payload: string, signature: string | null, secret: string) {
-  if (!signature) return false;
-  const parts = signature.split('=');
-  if (parts.length !== 2 || parts[0] !== 'sha256') return false;
-  
-  const expectedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(payload)
-    .digest('hex');
-    
-  return crypto.timingSafeEqual(
-    Buffer.from(expectedSignature, 'utf8'),
-    Buffer.from(parts[1], 'utf8')
-  );
-}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -33,73 +16,33 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const rawBody = await request.text()
-    const signature = request.headers.get('x-hub-signature-256')
-    const appSecret = process.env.FACEBOOK_APP_SECRET
+    const body = await request.json()
 
-    console.log('Webhook received:', signature ? 'Signed' : 'Unsigned');
-
-    // Verify webhook signature (Optional: only if appSecret is provided and correct)
-    if (appSecret && signature) {
-      const isValid = verifySignature(rawBody, signature, appSecret);
-      if (!isValid) {
-        console.error('Signature verification failed, but continuing for debugging...');
-        // In production, you might want to return 401, but let's be more flexible for now
-      }
-    }
-
-    const body = JSON.parse(rawBody);
-
+    // Facebook sends events under 'entry' array
     if (body.object === 'page' && body.entry) {
-      const supabase = createAdminClient();
+      const supabase = createAdminClient()
 
       for (const entry of body.entry) {
-        const pageId = entry.id;
-        console.log('Processing entry for page:', pageId);
+        const pageId = entry.id
         
-        // Safe query: only select columns we know exist for sure
-        const { data: pageRecord, error: pageError } = await supabase
+        // Check if this page is registered and auto_reply is enabled
+        const { data: pageRecord } = await supabase
           .from('facebook_pages')
-          .select('id, page_id, page_name, access_token, auto_reply_enabled')
+          .select('*')
           .eq('page_id', pageId)
-          .single();
+          .eq('auto_reply_enabled', true)
+          .single()
 
-        if (pageError || !pageRecord) {
-          console.log('Page not found or query error:', pageId, pageError?.message);
-          continue;
-        }
+        if (!pageRecord) continue // Page not found or auto-reply disabled
 
-        if (!pageRecord.auto_reply_enabled) {
-          console.log('Auto-reply is disabled for page:', pageRecord.page_name);
-          continue;
-        }
+        for (const messaging of entry.changes || []) {
+          // Process comments on feed
+          if (messaging.field === 'feed' && messaging.value.item === 'comment' && messaging.value.verb === 'add') {
+            const commentId = messaging.value.comment_id
+            const commentText = messaging.value.message || ''
+            const senderId = messaging.value.from.id
 
-        // Try to fetch optional columns safely
-        const { data: extraData } = await supabase
-          .from('facebook_pages')
-          .select('default_reply_enabled, default_reply_message')
-          .eq('id', pageRecord.id)
-          .single();
-        
-        const defaultReplyEnabled = extraData?.default_reply_enabled || false;
-        const defaultReplyMessage = extraData?.default_reply_message || null;
-
-        for (const change of entry.changes || []) {
-          console.log('Change detected:', change.field, change.value?.item, change.value?.verb);
-          
-          if (change.field === 'feed' && change.value.item === 'comment' && change.value.verb === 'add') {
-            const commentId = change.value.comment_id;
-            const commentText = change.value.message || '';
-            const senderId = change.value.from.id;
-            
-            console.log(`New comment from ${senderId}: "${commentText}"`);
-
-            // Avoid replying to the page's own comments
-            if (senderId === pageId) {
-              console.log('Ignoring self-comment');
-              continue;
-            }
-
+            // Fetch rules for this page
             const { data: rules } = await supabase
               .from('reply_rules')
               .select('*')
@@ -107,26 +50,21 @@ export async function POST(request: Request) {
 
             let matchedReply = null
 
-            // 1. Try keyword matching
+            // Simple keyword matching (case-insensitive)
             if (rules && rules.length > 0) {
               const lowerComment = commentText.toLowerCase()
               for (const rule of rules) {
-                const keywords = rule.keyword.split(',').map((k: string) => k.trim().toLowerCase())
-                if (keywords.some((k: string) => lowerComment.includes(k))) {
+                if (lowerComment.includes(rule.keyword.toLowerCase())) {
                   matchedReply = rule.reply_message
-                  break
+                  break // Match first rule found
                 }
               }
             }
 
-            // 2. Default Fallback (Static text)
-            if (!matchedReply && defaultReplyEnabled) {
-              matchedReply = defaultReplyMessage
-            }
-
             if (matchedReply) {
+              // Send reply via Graph API
               try {
-                const res = await fetch(`https://graph.facebook.com/v21.0/${commentId}/comments`, {
+                const res = await fetch(`https://graph.facebook.com/v19.0/${commentId}/comments`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
@@ -135,13 +73,10 @@ export async function POST(request: Request) {
                   })
                 })
                 const resData = await res.json()
-                if (resData.error) {
-                  console.error('Graph API Error:', resData.error);
-                  throw new Error(resData.error.message);
-                }
 
-                console.log('Reply sent successfully to comment:', commentId);
+                if (resData.error) throw new Error(resData.error.message)
 
+                // Log success
                 await supabase.from('reply_logs').insert({
                   page_id: pageRecord.id,
                   comment_id: commentId,
@@ -153,6 +88,7 @@ export async function POST(request: Request) {
 
               } catch (err: any) {
                 console.error('Failed to send reply:', err)
+                // Log error
                 await supabase.from('reply_logs').insert({
                   page_id: pageRecord.id,
                   comment_id: commentId,

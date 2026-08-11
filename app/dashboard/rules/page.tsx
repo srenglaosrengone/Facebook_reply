@@ -4,7 +4,7 @@ import { RulesManager } from '@/components/rules-manager'
 export default async function RulesPage() {
   const supabase = await createClient()
   
-  // Fetch user's pages to select from (Safe select)
+  // Fetch user's pages to select from
   const { data: pages } = await supabase
     .from('facebook_pages')
     .select('id, page_name')
@@ -15,16 +15,10 @@ export default async function RulesPage() {
     // Fetch rules for the first page by default, or all rules
     const { data: rules } = await supabase
       .from('reply_rules')
-      .select('*')
+      .select('*, facebook_pages(page_name)')
       .in('page_id', pages.map(p => p.id))
       .order('created_at', { ascending: false })
       
-    if (rules) {
-      rules.forEach(rule => {
-        const page = pages.find(p => p.id === rule.page_id)
-        rule.facebook_pages = { page_name: page?.page_name || 'Unknown' }
-      })
-    }
     initialRules = rules || []
   }
 

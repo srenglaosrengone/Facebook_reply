@@ -4,60 +4,45 @@ import { useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { PlusCircle, Trash2 } from 'lucide-react'
 
-type Page = { id: string, page_name: string }
+type Page = { id: string, page_id: string, page_name: string }
+
 type Rule = {
   id: string
   page_id: string
   keyword: string
-  reply_message: string
-  reply_type: string
-  facebook_pages?: { page_name: string }
+  reply_text: string
 }
 
 export function RulesManager({ pages, initialRules }: { pages: Page[], initialRules: Rule[] }) {
   const [rules, setRules] = useState<Rule[]>(initialRules)
   const [isAdding, setIsAdding] = useState(false)
-  const [selectedPage, setSelectedPage] = useState(pages[0]?.id || '')
+  const [selectedPageId, setSelectedPageId] = useState(pages[0]?.page_id || '')
   const [keyword, setKeyword] = useState('')
-  const [replyMessage, setReplyMessage] = useState('')
-  const [replyType, setReplyType] = useState('public')
+  const [replyText, setReplyText] = useState('')
   const [loading, setLoading] = useState(false)
-
   const supabase = createClient()
 
   const handleAddRule = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedPage || !keyword || !replyMessage) return
-
+    if (!selectedPageId || !keyword || !replyText) return
     setLoading(true)
-    const { data: insertedData, error: insertError } = await supabase
+
+    const { data, error } = await supabase
       .from('reply_rules')
       .insert({
-        page_id: selectedPage,
+        page_id: selectedPageId,
         keyword: keyword,
-        reply_message: replyMessage,
-        reply_type: replyType
+        reply_text: replyText
       })
-      .select()
+      .select('*')
       .single()
 
-    if (insertError) {
-      console.error(insertError)
-      setLoading(false)
-      return
-    }
-
-    // Manually add the page name for UI consistency
-    const page = pages.find(p => p.id === selectedPage)
-    const data = {
-      ...insertedData,
-      facebook_pages: { page_name: page?.page_name || '' }
-    }
-
-    if (data) {
+    if (error) {
+      console.error(error)
+    } else if (data) {
       setRules([data, ...rules])
       setKeyword('')
-      setReplyMessage('')
+      setReplyText('')
       setIsAdding(false)
     }
     setLoading(false)
@@ -95,12 +80,12 @@ export function RulesManager({ pages, initialRules }: { pages: Page[], initialRu
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Facebook Page</label>
               <select
-                value={selectedPage}
-                onChange={(e) => setSelectedPage(e.target.value)}
+                value={selectedPageId}
+                onChange={(e) => setSelectedPageId(e.target.value)}
                 className="w-full border border-gray-300 rounded-md shadow-sm px-4 py-2 focus:ring-[#1877F2] focus:border-[#1877F2] outline-none"
                 required
               >
-                {pages.map(p => <option key={p.id} value={p.id}>{p.page_name}</option>)}
+                {pages.map(p => <option key={p.id} value={p.page_id}>{p.page_name}</option>)}
               </select>
             </div>
             <div>
@@ -117,24 +102,13 @@ export function RulesManager({ pages, initialRules }: { pages: Page[], initialRu
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Reply Message</label>
               <textarea
-                value={replyMessage}
-                onChange={(e) => setReplyMessage(e.target.value)}
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
                 placeholder="Enter the reply message..."
                 rows={3}
                 className="w-full border border-gray-300 rounded-md shadow-sm px-4 py-2 focus:ring-[#1877F2] focus:border-[#1877F2] outline-none"
                 required
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Reply Type</label>
-              <select
-                value={replyType}
-                onChange={(e) => setReplyType(e.target.value)}
-                className="w-full border border-gray-300 rounded-md shadow-sm px-4 py-2 focus:ring-[#1877F2] focus:border-[#1877F2] outline-none"
-              >
-                <option value="public">Public Comment</option>
-                <option value="private">Private Message (DM)</option>
-              </select>
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <button
@@ -163,35 +137,33 @@ export function RulesManager({ pages, initialRules }: { pages: Page[], initialRu
           </div>
         ) : (
           <ul className="divide-y divide-gray-200">
-            {rules.map((rule) => (
-              <li key={rule.id} className="p-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="flex gap-2 mb-2">
-                      <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {rule.facebook_pages?.page_name}
+            {rules.map((rule) => {
+              const pageName = pages.find(p => p.page_id === rule.page_id)?.page_name || 'Unknown Page'
+              return (
+                <li key={rule.id} className="p-6">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-2">
+                        {pageName}
                       </span>
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${rule.reply_type === 'private' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'}`}>
-                        {rule.reply_type === 'private' ? 'Private' : 'Public'}
-                      </span>
+                      <h4 className="text-base font-semibold text-gray-900 mb-1">
+                        If comment contains: <span className="text-[#1877F2]">&quot;{rule.keyword}&quot;</span>
+                      </h4>
+                      <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md border border-gray-100 mt-2">
+                        ↳ {rule.reply_text}
+                      </p>
                     </div>
-                    <h4 className="text-base font-semibold text-gray-900 mb-1">
-                      If comment contains: <span className="text-[#1877F2]">&quot;{rule.keyword}&quot;</span>
-                    </h4>
-                    <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-md border border-gray-100 mt-2">
-                      ↳ {rule.reply_message}
-                    </p>
+                    <button
+                      onClick={() => handleDeleteRule(rule.id)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                      title="Delete rule"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleDeleteRule(rule.id)}
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                    title="Delete rule"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </button>
-                </div>
-              </li>
-            ))}
+                </li>
+              )
+            })}
           </ul>
         )}
       </div>

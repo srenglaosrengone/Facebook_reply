@@ -9,18 +9,13 @@ export default async function ManagePagesPage() {
     .select('*')
     .order('created_at', { ascending: false })
 
-  // We fetch the session. If the user just logged in, provider_token might be available
-  // to fetch pages from Facebook Graph API.
-  const { data: { session } } = await supabase.auth.getSession()
-
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">Manage Pages</h2>
-        <p className="text-gray-600 mt-1">Connect your Facebook pages and configure automated rules.</p>
+        <p className="text-gray-600 mt-1">Connect your Facebook pages using an access token.</p>
       </div>
-
-      <PageManager initialPages={pages || []} providerToken={session?.provider_token || null} />
+      <PageManager initialPages={pages || []} />
     </div>
   )
 }

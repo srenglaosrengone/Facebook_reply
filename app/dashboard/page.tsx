@@ -5,30 +5,22 @@ import { PlusCircle, Activity } from 'lucide-react'
 export default async function DashboardPage() {
   const supabase = await createClient()
   
-  // Fetch user's pages (Safe select)
+  // Fetch user's pages
   const { data: pages } = await supabase
     .from('facebook_pages')
-    .select('id, page_id, page_name, auto_reply_enabled, created_at')
+    .select('*')
     .order('created_at', { ascending: false })
 
   // Fetch recent logs if pages exist
   let recentLogs: any[] = []
   if (pages && pages.length > 0) {
-    const pageIds = pages.map(p => p.id)
+    const pageIds = pages.map(p => p.page_id)
     const { data: logs } = await supabase
       .from('reply_logs')
       .select('*')
       .in('page_id', pageIds)
       .order('created_at', { ascending: false })
       .limit(5)
-    
-    // Manually attach page name
-    if (logs) {
-      logs.forEach(log => {
-        const page = pages.find(p => p.id === log.page_id)
-        log.facebook_pages = { page_name: page?.page_name || 'Unknown' }
-      })
-    }
     
     recentLogs = logs || []
   }
@@ -97,16 +89,19 @@ export default async function DashboardPage() {
                 <p>No recent activity.</p>
               </div>
             ) : (
-              recentLogs.map((log) => (
-                <div key={log.id} className="px-6 py-4">
-                  <div className="flex justify-between mb-1">
-                    <p className="text-sm font-medium text-gray-900">{log.facebook_pages.page_name}</p>
-                    <span className="text-xs text-gray-500">{new Date(log.created_at).toLocaleDateString()}</span>
+              recentLogs.map((log) => {
+                const page = pages?.find(p => p.page_id === log.page_id)
+                return (
+                  <div key={log.id} className="px-6 py-4">
+                    <div className="flex justify-between mb-1">
+                      <p className="text-sm font-medium text-gray-900">{page?.page_name || 'Unknown Page'}</p>
+                      <span className="text-xs text-gray-500">{new Date(log.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <p className="text-sm text-gray-600 truncate">&quot;{log.status === 'success' ? 'Replied' : 'Failed'}&quot;</p>
+                    <p className="text-xs mt-1 text-green-600">↳ Replying: &quot;{log.reply_text}&quot;</p>
                   </div>
-                  <p className="text-sm text-gray-600 truncate">&quot;{log.comment_text}&quot;</p>
-                  <p className="text-xs mt-1 text-green-600">↳ Replying: &quot;{log.reply_sent}&quot;</p>
-                </div>
-              ))
+                )
+              })
             )}
           </div>
         </div>

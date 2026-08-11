@@ -1,70 +1,72 @@
 # Facebook Page Manager SaaS
 
-This is a production-ready Next.js application that automates Facebook Page comment replies using the Facebook Graph API, Webhooks, and Supabase.
+A modern SaaS application that automatically replies to comments on your Facebook Pages based on keyword rules.
 
 ## Features
 
-- Login with Facebook (Supabase Auth).
-- Connect Facebook Pages.
-- Manage pages and toggle auto-reply.
-- Configure keyword-based reply rules.
-- Facebook Webhooks integration for real-time comment tracking.
-- Automated comment replies via Graph API.
-- Dashboard with recent activity logs.
+- **Facebook Page Access Token-only architecture**: Securely connect pages using long-lived access tokens without needing full Facebook Login OAuth.
+- **Rule-based Auto Replies**: Define keyword triggers to automatically reply to comments.
+- **Supabase Authentication & Database**: Built on a secure Supabase backend with Row Level Security.
+- **Modern Dashboard**: Responsive and clean UI built with Next.js App Router and Tailwind CSS.
 
-## Setup Instructions
+## Tech Stack
 
-### 1. Supabase Setup
+- Next.js (App Router)
+- TypeScript
+- Tailwind CSS
+- Supabase (Auth, Postgres, RLS)
+- Facebook Graph API & Webhooks
 
-1. Create a new project on [Supabase](https://supabase.com).
-2. Go to **Project Settings -> API** and copy your `Project URL`, `anon public key`, and `service_role secret`.
-3. In AI Studio, add these to your Secrets or Environment Variables:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-4. Go to **SQL Editor** in Supabase and run the SQL script found in `supabase-schema.sql` to create the necessary tables and Row Level Security (RLS) policies.
+## Prerequisites
 
-### 2. Facebook Developer Console Setup
+- Node.js 18+
+- Supabase Project
+- Facebook Developer App (with Webhooks enabled)
 
-1. Go to [Facebook Developers](https://developers.facebook.com/) and create a new App (Type: Business).
-2. Under **Add products to your app**, set up **Facebook Login** and **Webhooks**.
-3. In **App Settings -> Basic**, copy the `App ID` and `App Secret`.
-4. Add these to your AI Studio Secrets:
-   - `FACEBOOK_APP_ID`
-   - `FACEBOOK_APP_SECRET`
+## Local Development Instructions
 
-### 3. Supabase Auth Configuration (Facebook Login)
+1. **Clone the repository and install dependencies**
+   ```bash
+   npm install
+   ```
 
-1. In Supabase, go to **Authentication -> Providers -> Facebook**.
-2. Enable Facebook provider.
-3. Enter your `Facebook App ID` and `Facebook App Secret`.
-4. Copy the **Callback URL (for OAuth)** provided by Supabase (e.g., `https://<project-id>.supabase.co/auth/v1/callback`).
-5. Go back to Facebook Developer Console -> **Facebook Login -> Settings**.
-6. Paste the Supabase Callback URL into **Valid OAuth Redirect URIs**.
+2. **Set up Supabase Database**
+   - Go to your Supabase project's SQL Editor.
+   - Run the SQL queries from `supabase-schema.sql` to create tables and RLS policies.
 
-### 4. Facebook Webhooks Setup
+3. **Configure Environment Variables**
+   - Copy `.env.example` to `.env.local`:
+     ```bash
+     cp .env.example .env.local
+     ```
+   - Fill in your Supabase details (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`).
+   - Fill in your Facebook Developer details.
 
-To receive real-time comments, you must configure Facebook Webhooks.
+4. **Run the development server**
+   ```bash
+   npm run dev
+   ```
+   Open `http://localhost:3000` in your browser.
 
-1. Choose a secret string for verification (e.g., `my_secret_verify_token_123`) and add it to AI Studio Secrets as `FACEBOOK_VERIFY_TOKEN`.
-2. In Facebook Developer Console, go to **Webhooks**.
-3. Select **Page** from the dropdown and click **Subscribe to this object**.
-4. Set the **Callback URL** to: `https://<YOUR_AI_STUDIO_APP_URL>/api/webhooks/facebook`
-5. Set the **Verify Token** to the exact string you chose above.
-6. Once subscribed, click **Subscribe** on the `feed` field. (This listens for comments).
-7. *Note*: To get this working in production, your Facebook app will require App Review for the `pages_manage_engagement` and `pages_read_engagement` permissions, as well as the `feed` webhook field.
+5. **Facebook Webhook Setup (Local Testing)**
+   - Use a tunneling tool like Ngrok or Cloudflare Tunnels to expose your local environment.
+   - Example: `ngrok http 3000`
+   - Use the Ngrok URL for your Supabase "Site URL" and Facebook Webhook "Callback URL".
 
-### 5. Deployment
+## Vercel Deployment Instructions
 
-The application is fully compatible with Next.js standard hosting environments, including Vercel and Google Cloud Run (AI Studio's runtime).
+1. Push your code to a GitHub repository.
+2. Log in to Vercel and click "Add New... > Project".
+3. Import your GitHub repository.
+4. Expand the "Environment Variables" section.
+5. Add all the variables from your `.env.local` file.
+6. Click "Deploy".
+7. Once deployed, take your Vercel production URL and update:
+   - Supabase Site URL (Authentication > URL Configuration)
+   - Facebook Webhook Callback URL (e.g., `https://your-vercel-domain.com/api/webhooks/facebook`)
 
-## Environment Variables Recap
+## Security Notes
 
-```env
-NEXT_PUBLIC_SUPABASE_URL="your_supabase_project_url"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="your_supabase_anon_key"
-SUPABASE_SERVICE_ROLE_KEY="your_supabase_service_role_key"
-FACEBOOK_APP_ID="your_facebook_app_id"
-FACEBOOK_APP_SECRET="your_facebook_app_secret"
-FACEBOOK_VERIFY_TOKEN="your_custom_webhook_verify_token"
-```
+- Facebook Page Access Tokens are never exposed to the client browser after they are securely saved.
+- Row Level Security (RLS) guarantees that users can only access their own Facebook Pages, rules, comments, and logs.
+- Server-side Next.js API routes handle all interactions with the Facebook Graph API to prevent credential leakage.

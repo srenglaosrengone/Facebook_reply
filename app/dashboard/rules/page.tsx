@@ -7,7 +7,7 @@ export default async function RulesPage() {
   // Fetch user's pages to select from
   const { data: pages } = await supabase
     .from('facebook_pages')
-    .select('id, page_name')
+    .select('id, page_id, page_name')
     .order('created_at', { ascending: false })
 
   let initialRules: any[] = []
